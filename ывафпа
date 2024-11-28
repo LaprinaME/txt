@@ -1,0 +1,2081 @@
+Login: nszqgjew@firstmail.space
+Password: h9fs-YDSZtW83X9
+
+Login: yoiteucrannepreu-1285@wishy.fr
+Password: 2QMbNRnFzu
+
+
+lanthlatico1970@outlook.com;
+kepyk28946akage
+
+
+Login: yoiteucrannepreu-1285@wishy.fr
+Password: 2QMbNRnFzu
+
+
+using System;
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace TourismAgencyApp
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+
+            // Настраиваем кнопку авторизации
+            button1.Text = "Авторизация";
+            button1.Size = new Size(200, 40);
+            button1.Click += button1_Click;
+
+            // Настраиваем кнопку регистрации
+            button2.Text = "Регистрация";
+            button2.Size = new Size(200, 40);
+            button2.Click += button2_Click;
+
+            // Добавляем обработчик для изменения размера формы
+            this.Resize += Form1_Resize;
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            // Открываем форму авторизации
+            LoginForm loginForm = new LoginForm();
+            loginForm.Show();
+            loginForm.BringToFront();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            // Открываем форму регистрации
+            RegisterForm registerForm = new RegisterForm();
+            registerForm.Show();
+            registerForm.BringToFront();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            // Центрируем кнопки при загрузке формы
+            CenterAndResizeButtons();
+        }
+
+        private void Form1_Resize(object sender, EventArgs e)
+        {
+            // Центрируем и изменяем размер кнопок при изменении размера формы
+            CenterAndResizeButtons();
+        }
+
+        private void CenterAndResizeButtons()
+        {
+            // Изменение размера кнопок на основе ширины формы
+            int buttonWidth = this.ClientSize.Width / 4;
+            int buttonHeight = this.ClientSize.Height / 10;
+
+            // Устанавливаем минимальные и максимальные размеры кнопок
+            buttonWidth = Math.Max(150, Math.Min(300, buttonWidth));
+            buttonHeight = Math.Max(30, Math.Min(60, buttonHeight));
+
+            button1.Size = new Size(buttonWidth, buttonHeight);
+            button2.Size = new Size(buttonWidth, buttonHeight);
+
+            // Центрируем кнопки
+            button1.Location = new Point(
+                (this.ClientSize.Width - button1.Width) / 2,
+                (this.ClientSize.Height - button1.Height) / 2 - buttonHeight - 10
+            );
+
+            button2.Location = new Point(
+                (this.ClientSize.Width - button2.Width) / 2,
+                (this.ClientSize.Height - button2.Height) / 2 + 10
+            );
+        }
+    }
+}
+
+
+using Microsoft.Data.SqlClient;
+using System;
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace TourismAgencyApp
+{
+    public partial class LoginForm : Form
+    {
+        public LoginForm()
+        {
+            InitializeComponent();
+            this.Text = "Вход в систему";
+            this.Size = new Size(400, 250);
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            this.MaximizeBox = false;
+        }
+
+        private void LoginForm_Load(object sender, EventArgs e)
+        {
+            // Дополнительные настройки могут быть добавлены здесь
+        }
+
+        // Кнопка для входа
+        private void button1_Click_1(object sender, EventArgs e)
+        {
+            string phone = textBox1.Text;    // Используем телефон как логин
+            string email = textBox2.Text;    // Используем email как пароль
+            string connectionString = @"Data Source=DESKTOP-DFJ77GS;Initial Catalog=Tourism;Integrated Security=True;TrustServerCertificate=True;";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    connection.Open();
+                    string query = "SELECT Код_роли FROM Клиенты WHERE Телефон = @phone AND Email = @password";
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@phone", phone);
+                        command.Parameters.AddWithValue("@password", email);
+
+                        var roleCode = command.ExecuteScalar();
+
+                        if (roleCode != null)
+                        {
+                            Form nextForm = GetNextFormByRole(roleCode.ToString());
+                            if (nextForm != null)
+                            {
+                                nextForm.Show();
+                                this.Hide();
+                            }
+                        }
+                        else
+                        {
+                            MessageBox.Show("Неправильный телефон или email", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Ошибка подключения к базе данных: " + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private Form GetNextFormByRole(string roleCode)
+        {
+            // Инициализация новой формы для каждой роли
+            switch (roleCode)
+            {
+                case "1": // Администратор
+                    return new AdminMenu();
+                case "2": // Туроператор
+                    return new TravelOperatorMenu();
+                case "3": // Менеджер
+                    return new ManagerMenu();
+                default:
+                    MessageBox.Show("Неизвестный код роли", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return null;
+            }
+        }
+
+        private void textBox1_TextChanged_1(object sender, EventArgs e)
+        {
+            // код обработки
+        }
+
+        private void textBox2_TextChanged_1(object sender, EventArgs e)
+        {
+            // код обработки
+        }
+    }
+}
+
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace TourismAgencyApp
+{
+    public partial class AdminMenu : Form
+    {
+        public static AdminMenu Instance { get; } = new AdminMenu();
+        private string connectionString = @"Data Source=DESKTOP-DFJ77GS;Initial Catalog=Tourism;Integrated Security=True;MultipleActiveResultSets=True";
+        private SqlDataAdapter adapter;
+        private DataSet ds;
+        private string sql = "SELECT * FROM Клиенты"; // SQL-запрос для загрузки данных о клиентах
+
+        public AdminMenu()
+        {
+            InitializeComponent();
+        }
+
+        private async void AdminMenu_Load(object sender, EventArgs e)
+        {
+            await LoadDataAsync(); // Загрузка данных при запуске формы
+        }
+
+        // Асинхронный метод для загрузки данных из базы в DataGridView
+        private async Task LoadDataAsync()
+        {
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                adapter = new SqlDataAdapter(sql, connection);
+                ds = new DataSet();
+                await Task.Run(() => adapter.Fill(ds));
+                dataGridView1.DataSource = ds.Tables[0];
+            }
+        }
+
+        // button1 — добавление нового клиента
+        private async void button1_Click(object sender, EventArgs e)
+        {
+            string id = Prompt.ShowDialog("ID клиента:", "Добавление клиента");
+            if (string.IsNullOrEmpty(id)) return;
+
+            string fullName = Prompt.ShowDialog("ФИО клиента:", "Добавление клиента");
+            if (string.IsNullOrEmpty(fullName)) return;
+
+            string phone = Prompt.ShowDialog("Телефон:", "Добавление клиента");
+            if (string.IsNullOrEmpty(phone)) return;
+
+            string email = Prompt.ShowDialog("Email:", "Добавление клиента");
+            if (string.IsNullOrEmpty(email)) return;
+
+            string roleCode = Prompt.ShowDialog("Код роли:", "Добавление клиента");
+            if (string.IsNullOrEmpty(roleCode)) return;
+
+            await AddClientAsync(id, fullName, phone, email, roleCode);
+            await LoadDataAsync(); // Обновляем данные после добавления
+        }
+
+        // Асинхронный метод для добавления нового клиента
+        private async Task AddClientAsync(string id, string fullName, string phone, string email, string roleCode)
+        {
+            string insertSql = @"
+    INSERT INTO Клиенты (ID, ФИО, Телефон, Email, Код_роли) 
+    VALUES (@id, @fullName, @phone, @password, @roleCode)";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (SqlCommand insertCommand = new SqlCommand(insertSql, connection))
+                {
+                    insertCommand.Parameters.AddWithValue("@id", id);
+                    insertCommand.Parameters.AddWithValue("@fullName", fullName);
+                    insertCommand.Parameters.AddWithValue("@phone", phone);
+                    insertCommand.Parameters.AddWithValue("@password", email); // Используем email как пароль
+                    insertCommand.Parameters.AddWithValue("@roleCode", roleCode);
+                    int numberOfInsertedRows = await insertCommand.ExecuteNonQueryAsync();
+                    Console.WriteLine($"Добавлено объектов: {numberOfInsertedRows}");
+                }
+            }
+        }
+
+
+        // button2 — удаление выбранного клиента
+        private async void button2_Click(object sender, EventArgs e)
+        {
+            if (dataGridView1.SelectedRows.Count > 0)
+            {
+                int id = (int)dataGridView1.SelectedRows[0].Cells[0].Value; // ID клиента в первом столбце
+
+                // Сначала удаляем связанные записи из таблицы Договор
+                string deleteContractsSql = "DELETE FROM Договор WHERE Клиент_ID = @id";
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (SqlCommand deleteContractsCommand = new SqlCommand(deleteContractsSql, connection))
+                    {
+                        deleteContractsCommand.Parameters.AddWithValue("@id", id);
+                        await deleteContractsCommand.ExecuteNonQueryAsync();
+                    }
+                }
+
+                // Теперь удаляем клиента
+                string deleteClientSql = "DELETE FROM Клиенты WHERE ID = @id";
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (SqlCommand deleteClientCommand = new SqlCommand(deleteClientSql, connection))
+                    {
+                        deleteClientCommand.Parameters.AddWithValue("@id", id);
+                        await deleteClientCommand.ExecuteNonQueryAsync();
+                    }
+                }
+
+                await LoadDataAsync(); // Обновляем данные после удаления
+            }
+            else
+            {
+                MessageBox.Show("Пожалуйста, выберите клиента для удаления.");
+            }
+        }
+
+
+        // button3 — сохранение изменений в базе данных
+        private async void button3_Click_1(object sender, EventArgs e)
+        {
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                adapter = new SqlDataAdapter(sql, connection);
+                SqlCommandBuilder commandBuilder = new SqlCommandBuilder(adapter);
+                await Task.Run(() => adapter.Update(ds));
+            }
+            MessageBox.Show("Изменения сохранены.");
+        }
+
+        // button4 — обновление выбранного клиента
+        private async void button4_Click(object sender, EventArgs e)
+        {
+            if (dataGridView1.SelectedRows.Count > 0)
+            {
+                int id = (int)dataGridView1.SelectedRows[0].Cells[0].Value; // ID клиента в первом столбце
+
+                string fullName = Prompt.ShowDialog("ФИО клиента:", "Обновление клиента");
+                if (string.IsNullOrEmpty(fullName)) return;
+
+                string phone = Prompt.ShowDialog("Телефон:", "Обновление клиента");
+                if (string.IsNullOrEmpty(phone)) return;
+
+                string email = Prompt.ShowDialog("Email:", "Обновление клиента");
+                if (string.IsNullOrEmpty(email)) return;
+
+                string roleCode = Prompt.ShowDialog("Код роли:", "Обновление клиента");
+                if (string.IsNullOrEmpty(roleCode)) return;
+
+                await UpdateClientAsync(id, fullName, phone, email, roleCode);
+                await LoadDataAsync(); // Обновляем данные после изменения
+            }
+            else
+            {
+                MessageBox.Show("Пожалуйста, выберите клиента для обновления.");
+            }
+        }
+
+        // Асинхронный метод для обновления клиента
+        private async Task UpdateClientAsync(int id, string fullName, string phone, string email, string roleCode)
+        {
+            string updateSql = @"
+            UPDATE Клиенты 
+            SET ФИО = @fullName, Телефон = @phone, Email = @email, Код_роли = @roleCode 
+            WHERE ID = @id";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (SqlCommand updateCommand = new SqlCommand(updateSql, connection))
+                {
+                    updateCommand.Parameters.AddWithValue("@fullName", fullName);
+                    updateCommand.Parameters.AddWithValue("@phone", phone);
+                    updateCommand.Parameters.AddWithValue("@email", email);
+                    updateCommand.Parameters.AddWithValue("@roleCode", roleCode);
+                    updateCommand.Parameters.AddWithValue("@id", id);
+                    await updateCommand.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        public class Prompt : Form
+        {
+            public static string ShowDialog(string text, string caption)
+            {
+                Form prompt = new Form()
+                {
+                    Width = 500,
+                    Height = 300,
+                    Text = caption
+                };
+                Label textLabel = new Label() { Left = 50, Top = 20, Text = text };
+                TextBox textBox = new TextBox() { Left = 50, Top = 50, Width = 400 };
+                Button confirmation = new Button() { Text = "Ok", Left = 350, Width = 100, Top = 70 };
+                confirmation.Click += (sender, e) => { prompt.Close(); };
+                prompt.Controls.Add(confirmation);
+                prompt.Controls.Add(textBox);
+                prompt.Controls.Add(textLabel);
+                prompt.ShowDialog();
+                return textBox.Text;
+            }
+        }
+
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // код обработки
+        }
+    }
+}
+
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace TourismAgencyApp
+{
+    public partial class ManagerMenu : Form
+    {
+        private string connectionString = @"Data Source=DESKTOP-DFJ77GS;Initial Catalog=Tourism;Integrated Security=True;MultipleActiveResultSets=True";
+        private SqlDataAdapter adapter;
+        private DataSet ds;
+        private string sql = "SELECT * FROM Договор"; // SQL-запрос для загрузки данных о договорах
+
+        public ManagerMenu()
+        {
+            InitializeComponent();
+        }
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // код обработки
+        }
+        private async void ManagerMenu_Load(object sender, EventArgs e)
+        {
+            await LoadDataAsync(); // Загрузка данных при запуске формы
+        }
+
+        // Асинхронный метод для загрузки данных из базы в DataGridView
+        private async Task LoadDataAsync()
+        {
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                adapter = new SqlDataAdapter(sql, connection);
+                ds = new DataSet();
+                await Task.Run(() => adapter.Fill(ds));
+                dataGridView1.DataSource = ds.Tables[0];
+            }
+        }
+
+        // Проверка существования клиента и тура перед добавлением или обновлением
+        private async Task<bool> IsValidForeignKey(string clientId, string tourNumber)
+        {
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+
+                // Проверка существования клиента
+                string clientCheckQuery = "SELECT COUNT(*) FROM Клиенты WHERE ID = @clientId";
+                using (SqlCommand clientCommand = new SqlCommand(clientCheckQuery, connection))
+                {
+                    clientCommand.Parameters.AddWithValue("@clientId", clientId);
+                    int clientExists = (int)await clientCommand.ExecuteScalarAsync();
+                    if (clientExists == 0)
+                    {
+                        MessageBox.Show("Клиент с указанным ID не найден.");
+                        return false;
+                    }
+                }
+
+                // Проверка существования тура
+                string tourCheckQuery = "SELECT COUNT(*) FROM Тур WHERE Номер = @tourNumber";
+                using (SqlCommand tourCommand = new SqlCommand(tourCheckQuery, connection))
+                {
+                    tourCommand.Parameters.AddWithValue("@tourNumber", tourNumber);
+                    int tourExists = (int)await tourCommand.ExecuteScalarAsync();
+                    if (tourExists == 0)
+                    {
+                        MessageBox.Show("Тур с указанным номером не найден.");
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        // button1 — добавление нового договора
+        private async void button1_Click(object sender, EventArgs e)
+        {
+            string number = Prompt.ShowDialog("Номер договора:", "Добавление договора");
+            if (string.IsNullOrEmpty(number)) return;
+
+            string clientId = Prompt.ShowDialog("ID клиента:", "Добавление договора");
+            if (string.IsNullOrEmpty(clientId)) return;
+
+            string tourNumber = Prompt.ShowDialog("Номер тура:", "Добавление договора");
+            if (string.IsNullOrEmpty(tourNumber)) return;
+
+            string date = Prompt.ShowDialog("Дата (yyyy-MM-dd):", "Добавление договора");
+            if (string.IsNullOrEmpty(date)) return;
+
+            string price = Prompt.ShowDialog("Стоимость:", "Добавление договора");
+            if (string.IsNullOrEmpty(price)) return;
+
+            string conditions = Prompt.ShowDialog("Условия:", "Добавление договора");
+            if (string.IsNullOrEmpty(conditions)) return;
+
+            if (await IsValidForeignKey(clientId, tourNumber))
+            {
+                await AddContractAsync(number, clientId, tourNumber, date, price, conditions);
+                await LoadDataAsync(); // Обновляем данные после добавления
+            }
+        }
+
+        // Асинхронный метод для добавления нового договора
+        private async Task AddContractAsync(string number, string clientId, string tourNumber, string date, string price, string conditions)
+        {
+            string insertSql = @"
+                INSERT INTO Договор (Номер, Клиент_ID, Тур_номер, Дата, Стоимость, Условия) 
+                VALUES (@number, @clientId, @tourNumber, @date, @price, @conditions)";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (SqlCommand insertCommand = new SqlCommand(insertSql, connection))
+                {
+                    insertCommand.Parameters.AddWithValue("@number", number);
+                    insertCommand.Parameters.AddWithValue("@clientId", clientId);
+                    insertCommand.Parameters.AddWithValue("@tourNumber", tourNumber);
+                    insertCommand.Parameters.AddWithValue("@date", date);
+                    insertCommand.Parameters.AddWithValue("@price", price);
+                    insertCommand.Parameters.AddWithValue("@conditions", conditions);
+                    await insertCommand.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        // button2 — удаление выбранного договора
+        private async void button2_Click(object sender, EventArgs e)
+        {
+            if (dataGridView1.SelectedRows.Count > 0)
+            {
+                int number = (int)dataGridView1.SelectedRows[0].Cells[0].Value; // Номер договора в первом столбце
+
+                string deleteSql = "DELETE FROM Договор WHERE Номер = @number";
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (SqlCommand deleteCommand = new SqlCommand(deleteSql, connection))
+                    {
+                        deleteCommand.Parameters.AddWithValue("@number", number);
+                        await deleteCommand.ExecuteNonQueryAsync();
+                    }
+                }
+
+                await LoadDataAsync(); // Обновляем данные после удаления
+            }
+            else
+            {
+                MessageBox.Show("Пожалуйста, выберите договор для удаления.");
+            }
+        }
+
+        // button3 — сохранение изменений в базе данных
+        private async void button3_Click(object sender, EventArgs e)
+        {
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                adapter = new SqlDataAdapter(sql, connection);
+                SqlCommandBuilder commandBuilder = new SqlCommandBuilder(adapter);
+                await Task.Run(() => adapter.Update(ds));
+            }
+            MessageBox.Show("Изменения сохранены.");
+        }
+
+        // button4 — обновление выбранного договора
+        private async void button4_Click(object sender, EventArgs e)
+        {
+            if (dataGridView1.SelectedRows.Count > 0)
+            {
+                int number = (int)dataGridView1.SelectedRows[0].Cells[0].Value; // Номер договора в первом столбце
+
+                string clientId = Prompt.ShowDialog("ID клиента:", "Обновление договора");
+                if (string.IsNullOrEmpty(clientId)) return;
+
+                string tourNumber = Prompt.ShowDialog("Номер тура:", "Обновление договора");
+                if (string.IsNullOrEmpty(tourNumber)) return;
+
+                string date = Prompt.ShowDialog("Дата (yyyy-MM-dd):", "Обновление договора");
+                if (string.IsNullOrEmpty(date)) return;
+
+                string price = Prompt.ShowDialog("Стоимость:", "Обновление договора");
+                if (string.IsNullOrEmpty(price)) return;
+
+                string conditions = Prompt.ShowDialog("Условия:", "Обновление договора");
+                if (string.IsNullOrEmpty(conditions)) return;
+
+                if (await IsValidForeignKey(clientId, tourNumber))
+                {
+                    await UpdateContractAsync(number, clientId, tourNumber, date, price, conditions);
+                    await LoadDataAsync(); // Обновляем данные после изменения
+                }
+            }
+            else
+            {
+                MessageBox.Show("Пожалуйста, выберите договор для обновления.");
+            }
+        }
+
+        // Асинхронный метод для обновления договора
+        private async Task UpdateContractAsync(int number, string clientId, string tourNumber, string date, string price, string conditions)
+        {
+            string updateSql = @"
+                UPDATE Договор 
+                SET Клиент_ID = @clientId, Тур_номер = @tourNumber, Дата = @date, Стоимость = @price, Условия = @conditions 
+                WHERE Номер = @number";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (SqlCommand updateCommand = new SqlCommand(updateSql, connection))
+                {
+                    updateCommand.Parameters.AddWithValue("@clientId", clientId);
+                    updateCommand.Parameters.AddWithValue("@tourNumber", tourNumber);
+                    updateCommand.Parameters.AddWithValue("@date", date);
+                    updateCommand.Parameters.AddWithValue("@price", price);
+                    updateCommand.Parameters.AddWithValue("@conditions", conditions);
+                    updateCommand.Parameters.AddWithValue("@number", number);
+                    await updateCommand.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        public class Prompt : Form
+        {
+            public static string ShowDialog(string text, string caption)
+            {
+                Form prompt = new Form()
+                {
+                    Width = 500,
+                    Height = 300,
+                    Text = caption
+                };
+                Label textLabel = new Label() { Left = 50, Top = 20, Text = text };
+                TextBox textBox = new TextBox() { Left = 50, Top = 50, Width = 400 };
+                Button confirmation = new Button() { Text = "Ok", Left = 350, Width = 100, Top = 70 };
+                confirmation.Click += (sender, e) => { prompt.Close(); };
+                prompt.Controls.Add(confirmation);
+                prompt.Controls.Add(textLabel);
+                prompt.Controls.Add(textBox);
+                prompt.ShowDialog();
+                return textBox.Text;
+            }
+        }
+    }
+}
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace Technoservice
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void btnLogin_Click(object sender, EventArgs e)
+        {
+            LoginForm loginForm = new LoginForm();
+            loginForm.Show();
+            loginForm.BringToFront();
+        }
+
+        private void btnRegister_Click(object sender, EventArgs e)
+        {
+            RegisterForm registerForm = new RegisterForm();
+            registerForm.Show();
+            registerForm.BringToFront();
+        }
+    }
+}
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace Technoservice
+{
+    public partial class LoginForm : Form
+    {
+        private string connectionString = @"Data Source=DESKTOP-DFJ77GS;Initial Catalog=Remont;Integrated Security=True;TrustServerCertificate=True;";
+        public LoginForm()
+        {
+            InitializeComponent();
+        }
+
+        private void LoginForm_Load(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void usernameTextBox_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void passwordTextBox_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void loginButton_Click(object sender, EventArgs e)
+        {
+            string username = usernameTextBox.Text;
+            string password = passwordTextBox.Text;
+
+            // Проверка логина и пароля
+            string roleCode = AuthenticateUser(username, password);
+
+            if (!string.IsNullOrEmpty(roleCode))
+            {
+                MessageBox.Show("Авторизация успешна.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // Перенаправление в зависимости от роли
+                Form nextForm = GetNextFormByRole(roleCode);
+                if (nextForm != null)
+                {
+                    nextForm.Show();
+                    this.Hide(); // Скрыть текущую форму
+                }
+            }
+            else
+            {
+                MessageBox.Show("Неверный логин или пароль.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private string AuthenticateUser(string username, string password)
+        {
+            string query = "SELECT empl_role FROM employees WHERE empl_login = @login AND empl_pass = @password";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    connection.Open();
+                    SqlCommand command = new SqlCommand(query, connection);
+                    command.Parameters.AddWithValue("@login", username);
+                    command.Parameters.AddWithValue("@password", password);
+
+                    // Получение кода роли пользователя
+                    object result = command.ExecuteScalar();
+
+                    // Если результат не пустой, возвращаем роль пользователя
+                    return result?.ToString();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Ошибка при подключении к базе данных: " + ex.Message, "Ошибка подключения", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return null;
+                }
+            }
+        }
+
+        private Form GetNextFormByRole(string roleCode)
+        {
+            switch (roleCode)
+            {
+                case "1": // Администратор
+                    return new AdminMenu();
+                case "2": // Работник
+                    return new WorkerMenu();
+                default:
+                    MessageBox.Show("Неизвестный код роли", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return null;
+            }
+        }
+    }
+}
+using System;
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace PetStoreApp
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+
+            // Настраиваем кнопку авторизации
+            button1.Text = "Авторизация";
+            button1.Location = new Point(50, 50);
+            button1.Size = new Size(200, 40);
+            button1.Click += button1_Click;
+
+            // Настраиваем кнопку регистрации
+            button2.Text = "Регистрация";
+            button2.Location = new Point(50, 100);
+            button2.Size = new Size(200, 40);
+            button2.Click += button2_Click;
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            // Открываем форму авторизации
+            LoginForm.Instance.Show();
+            LoginForm.Instance.BringToFront();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            // Открываем форму регистрации
+            RegisterForm.Instance.Show();
+            RegisterForm.Instance.BringToFront();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            // Центрируем кнопки
+            CenterButtons();
+        }
+
+        private void CenterButtons()
+        {
+            button1.Location = new Point(
+                (this.ClientSize.Width - button1.Width) / 2,
+                (this.ClientSize.Height - button1.Height) / 2 - 30
+            );
+
+            button2.Location = new Point(
+                (this.ClientSize.Width - button2.Width) / 2,
+                (this.ClientSize.Height - button2.Height) / 2 + 30
+            );
+        }
+    }
+}
+
+using System;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace PetStoreApp
+{
+    public partial class LoginForm : Form
+    {
+        private static LoginForm instance;
+
+        public static LoginForm Instance
+        {
+            get
+            {
+                if (instance == null || instance.IsDisposed)
+                {
+                    instance = new LoginForm();
+                }
+                return instance;
+            }
+        }
+
+        public LoginForm() // Убедитесь, что конструктор является public
+        {
+            InitializeComponent();
+            this.Text = "Вход в систему";
+            this.Size = new Size(400, 250);
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            this.MaximizeBox = false;
+        }
+
+        private void LoginForm_Load(object sender, EventArgs e)
+        {
+            // Дополнительные настройки могут быть добавлены здесь
+        }
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+            // код обработки
+        }
+
+        private void textBox2_TextChanged(object sender, EventArgs e)
+        {
+            // код обработки
+        }
+
+        // Кнопка для входа
+        private void button1_Click(object sender, EventArgs e)
+        {
+            string login = textBox1.Text;
+            string password = textBox2.Text;
+            string connectionString = @"Data Source=DESKTOP-DFJ77GS;Initial Catalog=PetStore;Integrated Security=True";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    connection.Open();
+                    string query = "SELECT Код_роли FROM Клиенты WHERE Логин = @login AND Пароль = @password";
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@login", login);
+                        command.Parameters.AddWithValue("@password", password);
+
+                        var roleCode = command.ExecuteScalar();
+
+                        if (roleCode != null)
+                        {
+                            Form nextForm = GetNextFormByRole(roleCode.ToString());
+                            if (nextForm != null)
+                            {
+                                nextForm.Show();
+                                this.Hide();
+                            }
+                        }
+                        else
+                        {
+                            MessageBox.Show("Неправильный логин или пароль", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Ошибка подключения к базе данных: " + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+
+        private Form GetNextFormByRole(string roleCode)
+        {
+            switch (roleCode)
+            {
+                case "1":
+                    return CustomerMenu.Instance;
+                case "2":
+                    return AdminMenu.Instance;
+                case "3":
+                    return SellerMenu.Instance;
+                default:
+                    MessageBox.Show("Неизвестный код роли", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return null;
+            }
+        }
+    }
+}
+
+using System;
+using System.Data.SqlClient;
+using System.Windows.Forms;
+
+namespace PetStoreApp
+{
+    public partial class RegisterForm : Form
+    {
+        private static RegisterForm instance;
+
+        public static RegisterForm Instance
+        {
+            get
+            {
+                if (instance == null || instance.IsDisposed)
+                {
+                    instance = new RegisterForm();
+                }
+                return instance;
+            }
+        }
+
+        private RegisterForm()
+        {
+            InitializeComponent();
+        }
+
+        private void RegisterForm_Load(object sender, EventArgs e)
+        {
+            // Здесь можно инициализировать данные, если потребуется
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e) // Ввод логина
+        {
+            // Логика обработки текста логина, если нужно
+        }
+
+        private void textBox2_TextChanged(object sender, EventArgs e) // Ввод пароля
+        {
+            // Логика обработки текста пароля, если нужно
+        }
+
+        private void textBox3_TextChanged(object sender, EventArgs e) // Ввод кода роли
+        {
+            // Логика обработки текста кода роли, если нужно
+        }
+
+        private void button1_Click(object sender, EventArgs e) // Кнопка регистрации
+        {
+            string login = textBox1.Text;
+            string password = textBox2.Text;
+            string roleCode = textBox3.Text;
+            string fullName = textBox4.Text;
+            string phone = textBox5.Text;
+            string address = textBox6.Text;
+            string favorites = textBox7.Text;
+
+            string connectionString = @"Data Source=DESKTOP-DFJ77GS;Initial Catalog=PetStore;Integrated Security=True";
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    connection.Open();
+
+                    string checkQuery = "SELECT COUNT(*) FROM Клиенты WHERE Логин = @login";
+                    using (SqlCommand checkCommand = new SqlCommand(checkQuery, connection))
+                    {
+                        checkCommand.Parameters.AddWithValue("@login", login);
+                        int count = (int)checkCommand.ExecuteScalar();
+                        if (count > 0)
+                        {
+                            MessageBox.Show("Логин уже существует", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
+                        }
+                    }
+
+                    string insertQuery = @"INSERT INTO Клиенты 
+                                   (ФИО, Телефон, Адрес, Логин, Пароль, Код_роли, Избранные_товары) 
+                                   VALUES (@fullName, @phone, @address, @login, @password, @roleCode, @favorites)";
+                    using (SqlCommand insertCommand = new SqlCommand(insertQuery, connection))
+                    {
+                        insertCommand.Parameters.AddWithValue("@fullName", fullName);
+                        insertCommand.Parameters.AddWithValue("@phone", phone);
+                        insertCommand.Parameters.AddWithValue("@address", address);
+                        insertCommand.Parameters.AddWithValue("@login", login);
+                        insertCommand.Parameters.AddWithValue("@password", password);
+                        insertCommand.Parameters.AddWithValue("@roleCode", roleCode);
+                        insertCommand.Parameters.AddWithValue("@favorites", favorites);
+
+                        int result = insertCommand.ExecuteNonQuery();
+                        if (result > 0)
+                        {
+                            MessageBox.Show("Регистрация успешна", "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                            Form nextForm = GetNextForm(roleCode);
+                            if (nextForm != null)
+                            {
+                                nextForm.Show();
+                                this.Hide();
+                            }
+                        }
+                        else
+                        {
+                            MessageBox.Show("Ошибка регистрации", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Ошибка подключения к базе данных: " + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+
+        private Form GetNextForm(string roleCode)
+        {
+            switch (roleCode)
+            {
+                case "1": // Код для покупателя
+                    return new CustomerMenu();
+                case "2": // Код для администратора
+                    return new CustomerMenu();
+                case "3": // Код для продавца
+                    return new SellerMenu();
+                default:
+                    MessageBox.Show("Неизвестный код роли", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return null;
+            }
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+            // Логика обработки, если нужно
+        }
+
+        private void textBox7_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox6_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox5_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox4_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+    }
+}
+
+using Microsoft.Identity.Client;
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace PetStoreApp
+{
+
+    public partial class SellerMenu : Form
+    {
+        public static SellerMenu Instance { get; } = new SellerMenu();
+        private DataSet ds;
+        private SqlDataAdapter adapter;
+        private string connectionString = @"Data Source=DESKTOP-DFJ77GS;Initial Catalog=PetStore;Integrated Security=True;MultipleActiveResultSets=True";
+        private string sql = "SELECT * FROM Товары";
+
+        public SellerMenu()
+        {
+            InitializeComponent();
+
+            // Настройки DataGridView
+            dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dataGridView1.AllowUserToAddRows = false;
+
+            // Загрузка данных при инициализации формы
+            LoadDataAsync(); // Запускаем загрузку данных
+        }
+
+        // Асинхронный метод для загрузки данных из базы в DataGridView
+        private async Task LoadDataAsync() // Изменено на Task
+        {
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                adapter = new SqlDataAdapter(sql, connection);
+                ds = new DataSet();
+                await Task.Run(() => adapter.Fill(ds)); // Заполняем DataSet в отдельном потоке
+                dataGridView1.DataSource = ds.Tables[0];
+            }
+        }
+
+        // button1 — добавление новой строки 
+        private async void button1_Click(object sender, EventArgs e)
+        {
+            // Ввод данных о новом товаре
+            string articleInput = Prompt.ShowDialog("Артикул товара:", "Добавление товара");
+            if (string.IsNullOrEmpty(articleInput)) return;
+
+            int article;
+            if (!int.TryParse(articleInput, out article))
+            {
+                MessageBox.Show("Некорректный артикул.");
+                return;
+            }
+
+            string name = Prompt.ShowDialog("Название товара:", "Добавление товара");
+            if (string.IsNullOrEmpty(name)) return;
+
+            string category = Prompt.ShowDialog("Категория товара:", "Добавление товара");
+            if (string.IsNullOrEmpty(category)) return;
+
+            string brand = Prompt.ShowDialog("Бренд товара:", "Добавление товара");
+            if (string.IsNullOrEmpty(brand)) return;
+
+            string animal = Prompt.ShowDialog("Тип животного:", "Добавление товара");
+            if (string.IsNullOrEmpty(animal)) return;
+
+            string description = Prompt.ShowDialog("Описание товара:", "Добавление товара");
+            if (string.IsNullOrEmpty(description)) return;
+
+            string composition = Prompt.ShowDialog("Состав товара:", "Добавление товара");
+            if (string.IsNullOrEmpty(composition)) return;
+
+            string unit = Prompt.ShowDialog("Единица измерения:", "Добавление товара");
+            if (string.IsNullOrEmpty(unit)) return;
+
+            decimal price;
+            if (!decimal.TryParse(Prompt.ShowDialog("Стоимость товара:", "Добавление товара"), out price))
+            {
+                MessageBox.Show("Некорректная стоимость.");
+                return;
+            }
+
+            int quantity;
+            if (!int.TryParse(Prompt.ShowDialog("Количество на складе:", "Добавление товара"), out quantity))
+            {
+                MessageBox.Show("Некорректное количество.");
+                return;
+            }
+
+            await AddProductAsync(article, name, category, brand, animal, description, composition, unit, price, quantity);
+            await LoadDataAsync(); // Обновляем данные после добавления
+        }
+
+        // Асинхронный метод для добавления нового товара
+        private async Task AddProductAsync(int article, string name, string category, string brand, string animal, string description, string composition, string unit, decimal price, int quantity)
+        {
+            string insertSql = @"
+            INSERT INTO Товары (Артикул, Название, Категория, Бренд, Животное, Описание, Состав, Единица, Стоимость, Количество_на_складе) 
+            VALUES (@article, @name, @category, @brand, @animal, @description, @composition, @unit, @price, @quantity)";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (SqlCommand insertCommand = new SqlCommand(insertSql, connection))
+                {
+                    insertCommand.Parameters.AddWithValue("@article", article);
+                    insertCommand.Parameters.AddWithValue("@name", name);
+                    insertCommand.Parameters.AddWithValue("@category", category);
+                    insertCommand.Parameters.AddWithValue("@brand", brand);
+                    insertCommand.Parameters.AddWithValue("@animal", animal);
+                    insertCommand.Parameters.AddWithValue("@description", description);
+                    insertCommand.Parameters.AddWithValue("@composition", composition);
+                    insertCommand.Parameters.AddWithValue("@unit", unit);
+                    insertCommand.Parameters.AddWithValue("@price", price);
+                    insertCommand.Parameters.AddWithValue("@quantity", quantity);
+                    int numberOfInsertedRows = await insertCommand.ExecuteNonQueryAsync();
+                    Console.WriteLine($"Добавлено объектов: {numberOfInsertedRows}");
+                }
+            }
+        }
+
+        // button2 — удаление выбранной строки
+        private async void button2_Click(object sender, EventArgs e)
+        {
+            // Проверяем, выбрана ли строка в DataGridView
+            if (dataGridView1.SelectedRows.Count > 0)
+            {
+                // Получаем артикул выбранного товара (предполагаем, что он находится в первом столбце)
+                int article = (int)dataGridView1.SelectedRows[0].Cells[0].Value;
+
+                // Запрос на удаление товара по артикулу
+                string deleteSql = "DELETE FROM Товары WHERE Артикул = @article";
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (SqlCommand deleteCommand = new SqlCommand(deleteSql, connection))
+                    {
+                        deleteCommand.Parameters.AddWithValue("@article", article);
+                        int numberOfDeletedRows = await deleteCommand.ExecuteNonQueryAsync();
+                        Console.WriteLine($"Удалено объектов: {numberOfDeletedRows}");
+                    }
+                }
+
+                // Обновляем данные после удаления
+                await LoadDataAsync();
+            }
+            else
+            {
+                MessageBox.Show("Пожалуйста, выберите товар для удаления.");
+            }
+        }
+
+        // button3 — сохранение изменений в базе данных
+        private async void button3_Click(object sender, EventArgs e)
+        {
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                adapter = new SqlDataAdapter(sql, connection);
+                SqlCommandBuilder commandBuilder = new SqlCommandBuilder(adapter);
+                await Task.Run(() => adapter.Update(ds));
+            }
+            MessageBox.Show("Изменения сохранены.");
+        }
+
+        // Обработчик события загрузки формы SellerMenu
+        private async void SellerMenu_Load(object sender, EventArgs e) // Сделан асинхронным
+        {
+            await LoadDataAsync();
+        }
+
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // Здесь можно добавить необходимую логику обработки нажатий на ячейки DataGridView.
+        }
+
+        private async void button4_Click(object sender, EventArgs e)
+        {
+            // Запрашиваем новые данные у пользователя для каждого параметра
+            string newName = Prompt.ShowDialog("Название товара:", "Обновление товара");
+            if (string.IsNullOrEmpty(newName)) return;
+
+            string newCategory = Prompt.ShowDialog("Категория товара:", "Обновление товара");
+            if (string.IsNullOrEmpty(newCategory)) return;
+
+            string newBrand = Prompt.ShowDialog("Бренд товара:", "Обновление товара");
+            if (string.IsNullOrEmpty(newBrand)) return;
+
+            string newAnimal = Prompt.ShowDialog("Животное:", "Обновление товара");
+            if (string.IsNullOrEmpty(newAnimal)) return;
+
+            string newDescription = Prompt.ShowDialog("Описание товара:", "Обновление товара");
+            if (string.IsNullOrEmpty(newDescription)) return;
+
+            string newComposition = Prompt.ShowDialog("Состав товара:", "Обновление товара");
+            if (string.IsNullOrEmpty(newComposition)) return;
+
+            string newUnit = Prompt.ShowDialog("Единицу измерения:", "Обновление товара");
+            if (string.IsNullOrEmpty(newUnit)) return;
+
+            decimal newPrice;
+            if (!decimal.TryParse(Prompt.ShowDialog("Стоимость товара:", "Обновление товара"), out newPrice))
+            {
+                MessageBox.Show("Некорректная стоимость.");
+                return;
+            }
+
+            int newQuantity;
+            if (!int.TryParse(Prompt.ShowDialog("Количество на складе:", "Обновление товара"), out newQuantity))
+            {
+                MessageBox.Show("Некорректное количество.");
+                return;
+            }
+
+            // SQL-запрос для обновления всех параметров, кроме артикула
+            string updateSql = @"
+            UPDATE Товары 
+            SET Название = @newName, Категория = @newCategory, Бренд = @newBrand, 
+                Животное = @newAnimal, Описание = @newDescription, Состав = @newComposition, 
+                Единица = @newUnit, Стоимость = @newPrice, Количество_на_складе = @newQuantity 
+            WHERE Артикул = @article";
+
+            // Получаем артикул выбранного товара
+            if (dataGridView1.SelectedRows.Count > 0)
+            {
+                int article = (int)dataGridView1.SelectedRows[0].Cells[0].Value;
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (SqlCommand updateCommand = new SqlCommand(updateSql, connection))
+                    {
+                        // Добавляем параметры к SQL-запросу
+                        updateCommand.Parameters.AddWithValue("@newName", newName);
+                        updateCommand.Parameters.AddWithValue("@newCategory", newCategory);
+                        updateCommand.Parameters.AddWithValue("@newBrand", newBrand);
+                        updateCommand.Parameters.AddWithValue("@newAnimal", newAnimal);
+                        updateCommand.Parameters.AddWithValue("@newDescription", newDescription);
+                        updateCommand.Parameters.AddWithValue("@newComposition", newComposition);
+                        updateCommand.Parameters.AddWithValue("@newUnit", newUnit);
+                        updateCommand.Parameters.AddWithValue("@newPrice", newPrice);
+                        updateCommand.Parameters.AddWithValue("@newQuantity", newQuantity);
+                        updateCommand.Parameters.AddWithValue("@article", article);
+                        await updateCommand.ExecuteNonQueryAsync();
+                    }
+                }
+
+                // Обновляем данные после изменения
+                await LoadDataAsync();
+            }
+            else
+            {
+                MessageBox.Show("Пожалуйста, выберите товар для обновления.");
+            }
+        }
+
+            public class Prompt : Form
+        {
+            public static string ShowDialog(string text, string caption)
+            {
+                Form prompt = new Form()
+                {
+                    Width = 500,
+                    Height = 300,
+                    Text = caption
+                };
+                Label textLabel = new Label() { Left = 50, Top = 20, Text = text };
+                TextBox textBox = new TextBox() { Left = 50, Top = 50, Width = 400 };
+                Button confirmation = new Button() { Text = "Ok", Left = 350, Width = 100, Top = 70 };
+                confirmation.Click += (sender, e) => { prompt.Close(); };
+                prompt.Controls.Add(confirmation);
+                prompt.Controls.Add(textBox);
+                prompt.Controls.Add(textLabel);
+                prompt.ShowDialog();
+                return textBox.Text;
+            }
+        }
+
+    }
+}
+
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace PetStoreApp
+{
+    public partial class AdminMenu : Form
+    {
+        public static AdminMenu Instance { get; } = new AdminMenu();
+        private string connectionString = @"Data Source=DESKTOP-DFJ77GS;Initial Catalog=PetStore;Integrated Security=True;MultipleActiveResultSets=True";
+        private SqlDataAdapter adapter;
+        private DataSet ds;
+        private string sql = "SELECT * FROM Поставки"; // SQL-запрос для загрузки данных о поставках
+
+        public AdminMenu()
+        {
+            InitializeComponent();
+        }
+
+        private async void AdminMenu_Load(object sender, EventArgs e)
+        {
+            // TODO: This line of code loads data into the 'petStoreDataSet5.Клиенты' table. You can move, or remove it, as needed.
+            this.клиентыTableAdapter.Fill(this.petStoreDataSet5.Клиенты);
+            await LoadDataAsync(); // Загрузка данных при запуске формы
+        }
+
+        // Асинхронный метод для загрузки данных из базы в DataGridView
+        private async Task LoadDataAsync()
+        {
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                adapter = new SqlDataAdapter(sql, connection);
+                ds = new DataSet();
+                await Task.Run(() => adapter.Fill(ds));
+                dataGridView1.DataSource = ds.Tables[0];
+            }
+        }
+
+        private async void button1_Click_1(object sender, EventArgs e)
+        {
+            string supplierIdInput = Prompt.ShowDialog("ID поставщика:", "Добавление поставки");
+            if (string.IsNullOrEmpty(supplierIdInput) || !int.TryParse(supplierIdInput, out int supplierId))
+            {
+                MessageBox.Show("Некорректный ID поставщика.");
+                return;
+            }
+
+            string deliveryDateInput = Prompt.ShowDialog("Дата поставки (yyyy-mm-dd):", "Добавление поставки");
+            if (string.IsNullOrEmpty(deliveryDateInput)) return;
+
+            if (!DateTime.TryParse(deliveryDateInput, out DateTime deliveryDate))
+            {
+                MessageBox.Show("Некорректная дата поставки.");
+                return;
+            }
+
+            string invoiceNumber = Prompt.ShowDialog("Номер накладной:", "Добавление поставки");
+            if (string.IsNullOrEmpty(invoiceNumber)) return;
+
+            await AddSupplyAsync(supplierId, deliveryDate, invoiceNumber);
+            await LoadDataAsync(); // Обновляем данные после добавления
+        }
+
+        // Асинхронный метод для добавления новой поставки без id
+        private async Task AddSupplyAsync(int supplierId, DateTime deliveryDate, string invoiceNumber)
+        {
+            string insertSql = @"
+    INSERT INTO Поставки (Поставщик_id, Дата_поставки, Номер_накладной) 
+    VALUES (@supplierId, @deliveryDate, @invoiceNumber)";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (SqlCommand insertCommand = new SqlCommand(insertSql, connection))
+                {
+                    insertCommand.Parameters.AddWithValue("@supplierId", supplierId);
+                    insertCommand.Parameters.AddWithValue("@deliveryDate", deliveryDate);
+                    insertCommand.Parameters.AddWithValue("@invoiceNumber", invoiceNumber);
+                    int numberOfInsertedRows = await insertCommand.ExecuteNonQueryAsync();
+                    Console.WriteLine($"Добавлено объектов: {numberOfInsertedRows}");
+                }
+            }
+        }
+
+
+        // button2 — удаление выбранной поставки
+        private async void button2_Click_1(object sender, EventArgs e)
+        {
+            if (dataGridView1.SelectedRows.Count > 0)
+            {
+                int id = (int)dataGridView1.SelectedRows[0].Cells[0].Value; // ID поставки в первом столбце
+
+                string deleteSql = "DELETE FROM Поставки WHERE Id = @id";
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (SqlCommand deleteCommand = new SqlCommand(deleteSql, connection))
+                    {
+                        deleteCommand.Parameters.AddWithValue("@id", id);
+                        await deleteCommand.ExecuteNonQueryAsync();
+                    }
+                }
+
+                await LoadDataAsync(); // Обновляем данные после удаления
+            }
+            else
+            {
+                MessageBox.Show("Пожалуйста, выберите поставку для удаления.");
+            }
+        }
+
+        // button3 — сохранение изменений в базе данных
+        private async void button3_Click(object sender, EventArgs e)
+        {
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                adapter = new SqlDataAdapter(sql, connection);
+                SqlCommandBuilder commandBuilder = new SqlCommandBuilder(adapter);
+                await Task.Run(() => adapter.Update(ds));
+            }
+            MessageBox.Show("Изменения сохранены.");
+        }
+
+        // button4 — обновление выбранной поставки
+        private async void button4_Click_1(object sender, EventArgs e)
+        {
+            if (dataGridView1.SelectedRows.Count > 0)
+            {
+                int id = (int)dataGridView1.SelectedRows[0].Cells[0].Value; // ID поставки в первом столбце
+
+                string supplierIdInput = Prompt.ShowDialog("ID поставщика:", "Обновление поставки");
+                if (string.IsNullOrEmpty(supplierIdInput) || !int.TryParse(supplierIdInput, out int supplierId))
+                {
+                    MessageBox.Show("Некорректный ID поставщика.");
+                    return;
+                }
+
+                string deliveryDateInput = Prompt.ShowDialog("Дата поставки (yyyy-mm-dd):", "Обновление поставки");
+                if (string.IsNullOrEmpty(deliveryDateInput) || !DateTime.TryParse(deliveryDateInput, out DateTime deliveryDate))
+                {
+                    MessageBox.Show("Некорректная дата поставки.");
+                    return;
+                }
+
+                string invoiceNumber = Prompt.ShowDialog("Номер накладной:", "Обновление поставки");
+                if (string.IsNullOrEmpty(invoiceNumber)) return;
+
+                await UpdateSupplyAsync(id, supplierId, deliveryDate, invoiceNumber);
+                await LoadDataAsync(); // Обновляем данные после изменения
+            }
+            else
+            {
+                MessageBox.Show("Пожалуйста, выберите поставку для обновления.");
+            }
+        }
+
+        // Асинхронный метод для обновления поставки
+        private async Task UpdateSupplyAsync(int id, int supplierId, DateTime deliveryDate, string invoiceNumber)
+        {
+            string updateSql = @"
+            UPDATE Поставки 
+            SET Поставщик_id = @supplierId, Дата_поставки = @deliveryDate, Номер_накладной = @invoiceNumber 
+            WHERE Id = @id";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (SqlCommand updateCommand = new SqlCommand(updateSql, connection))
+                {
+                    updateCommand.Parameters.AddWithValue("@supplierId", supplierId);
+                    updateCommand.Parameters.AddWithValue("@deliveryDate", deliveryDate);
+                    updateCommand.Parameters.AddWithValue("@invoiceNumber", invoiceNumber);
+                    updateCommand.Parameters.AddWithValue("@id", id);
+                    await updateCommand.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        public class Prompt : Form
+        {
+            public static string ShowDialog(string text, string caption)
+            {
+                Form prompt = new Form()
+                {
+                    Width = 500,
+                    Height = 300,
+                    Text = caption
+                };
+                Label textLabel = new Label() { Left = 50, Top = 20, Text = text };
+                TextBox textBox = new TextBox() { Left = 50, Top = 50, Width = 400 };
+                Button confirmation = new Button() { Text = "Ok", Left = 350, Width = 100, Top = 70 };
+                confirmation.Click += (sender, e) => { prompt.Close(); };
+                prompt.Controls.Add(confirmation);
+                prompt.Controls.Add(textBox);
+                prompt.Controls.Add(textLabel);
+                prompt.ShowDialog();
+                return textBox.Text;
+            }
+        }
+
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+    }
+}
+
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace PetStoreApp
+{
+    public partial class CustomerMenu : Form
+    {
+        public static CustomerMenu Instance { get; } = new CustomerMenu();
+        private DataSet ds;
+        private SqlDataAdapter adapter;
+        private string connectionString = @"Data Source=DESKTOP-DFJ77GS;Initial Catalog=PetStore;Integrated Security=True;MultipleActiveResultSets=True";
+        private string sql = "SELECT * FROM Заказы";
+
+        public CustomerMenu()
+        {
+            InitializeComponent();
+        }
+
+        private async void CustomerMenu_Load(object sender, EventArgs e)
+        {
+            await LoadDataAsync();
+        }
+
+        // Асинхронный метод для загрузки данных из базы в DataGridView
+        private async Task LoadDataAsync()
+        {
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                adapter = new SqlDataAdapter(sql, connection);
+                ds = new DataSet();
+                await Task.Run(() => adapter.Fill(ds));
+                dataGridView1.DataSource = ds.Tables[0];
+            }
+        }
+
+        // button1 — добавление нового заказа
+        private async void button1_Click(object sender, EventArgs e)
+        {
+            string idInput = Prompt.ShowDialog("ID заказа:", "Добавление заказа");
+            if (string.IsNullOrEmpty(idInput) || !int.TryParse(idInput, out int id))
+            {
+                MessageBox.Show("Некорректный ID заказа.");
+                return;
+            }
+
+            string client = Prompt.ShowDialog("Клиент:", "Добавление заказа");
+            if (string.IsNullOrEmpty(client)) return;
+
+            string orderDateInput = Prompt.ShowDialog("Дата заказа (yyyy-mm-dd):", "Добавление заказа");
+            if (string.IsNullOrEmpty(orderDateInput)) return;
+
+            if (!DateTime.TryParse(orderDateInput, out DateTime orderDate))
+            {
+                MessageBox.Show("Некорректная дата заказа.");
+                return;
+            }
+
+            string deliveryDateInput = Prompt.ShowDialog("Дата доставки (yyyy-mm-dd):", "Добавление заказа");
+            if (string.IsNullOrEmpty(deliveryDateInput)) return;
+
+            if (!DateTime.TryParse(deliveryDateInput, out DateTime deliveryDate))
+            {
+                MessageBox.Show("Некорректная дата доставки.");
+                return;
+            }
+
+            string orderContent = Prompt.ShowDialog("Состав заказа:", "Добавление заказа");
+            if (string.IsNullOrEmpty(orderContent)) return;
+
+            await AddOrderAsync(id, client, orderDate, deliveryDate, orderContent);
+            await LoadDataAsync(); // Обновляем данные после добавления
+        }
+
+        // Асинхронный метод для добавления нового заказа
+        private async Task AddOrderAsync(int id, string client, DateTime orderDate, DateTime deliveryDate, string orderContent)
+        {
+            string insertSql = @"
+    INSERT INTO Заказы (Id, Клиент, [Дата заказа], [Дата доставки], [Состав заказа]) 
+    VALUES (@id, @client, @orderDate, @deliveryDate, @orderContent)";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (SqlCommand insertCommand = new SqlCommand(insertSql, connection))
+                {
+                    insertCommand.Parameters.AddWithValue("@id", id);
+                    insertCommand.Parameters.AddWithValue("@client", client);
+                    insertCommand.Parameters.AddWithValue("@orderDate", orderDate);
+                    insertCommand.Parameters.AddWithValue("@deliveryDate", deliveryDate);
+                    insertCommand.Parameters.AddWithValue("@orderContent", orderContent);
+                    int numberOfInsertedRows = await insertCommand.ExecuteNonQueryAsync();
+                    Console.WriteLine($"Добавлено объектов: {numberOfInsertedRows}");
+                }
+            }
+        }
+
+        // button2 — удаление выбранного заказа
+        private async void button2_Click(object sender, EventArgs e)
+        {
+            if (dataGridView1.SelectedRows.Count > 0)
+            {
+                int id = (int)dataGridView1.SelectedRows[0].Cells[0].Value; // Предполагаем, что ID заказа в первом столбце
+
+                string deleteSql = "DELETE FROM Заказы WHERE Id = @id";
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (SqlCommand deleteCommand = new SqlCommand(deleteSql, connection))
+                    {
+                        deleteCommand.Parameters.AddWithValue("@id", id);
+                        int numberOfDeletedRows = await deleteCommand.ExecuteNonQueryAsync();
+                        Console.WriteLine($"Удалено объектов: {numberOfDeletedRows}");
+                    }
+                }
+
+                await LoadDataAsync();
+            }
+            else
+            {
+                MessageBox.Show("Пожалуйста, выберите заказ для удаления.");
+            }
+        }
+
+        // button3 — сохранение изменений в базе данных
+        private async void button3_Click(object sender, EventArgs e)
+        {
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                adapter = new SqlDataAdapter(sql, connection);
+                SqlCommandBuilder commandBuilder = new SqlCommandBuilder(adapter);
+                await Task.Run(() => adapter.Update(ds));
+            }
+            MessageBox.Show("Изменения сохранены.");
+        }
+
+        // button4 — обновление выбранного заказа
+        private async void button4_Click(object sender, EventArgs e)
+        {
+            if (dataGridView1.SelectedRows.Count > 0)
+            {
+                int id = (int)dataGridView1.SelectedRows[0].Cells[0].Value; // Предполагаем, что ID заказа в первом столбце
+
+                string client = Prompt.ShowDialog("Клиент:", "Обновление заказа");
+                if (string.IsNullOrEmpty(client)) return;
+
+                string orderDateInput = Prompt.ShowDialog("Дата заказа (yyyy-mm-dd):", "Обновление заказа");
+                if (string.IsNullOrEmpty(orderDateInput)) return;
+
+                if (!DateTime.TryParse(orderDateInput, out DateTime orderDate))
+                {
+                    MessageBox.Show("Некорректная дата заказа.");
+                    return;
+                }
+
+                string deliveryDateInput = Prompt.ShowDialog("Дата доставки (yyyy-mm-dd):", "Обновление заказа");
+                if (string.IsNullOrEmpty(deliveryDateInput)) return;
+
+                if (!DateTime.TryParse(deliveryDateInput, out DateTime deliveryDate))
+                {
+                    MessageBox.Show("Некорректная дата доставки.");
+                    return;
+                }
+
+                string orderContent = Prompt.ShowDialog("Состав заказа:", "Обновление заказа");
+                if (string.IsNullOrEmpty(orderContent)) return;
+
+                await UpdateOrderAsync(id, client, orderDate, deliveryDate, orderContent);
+                await LoadDataAsync(); // Обновляем данные после изменения
+            }
+            else
+            {
+                MessageBox.Show("Пожалуйста, выберите заказ для обновления.");
+            }
+        }
+
+        // Асинхронный метод для обновления заказа
+        private async Task UpdateOrderAsync(int id, string client, DateTime orderDate, DateTime deliveryDate, string orderContent)
+        {
+            string updateSql = @"
+            UPDATE Заказы 
+            SET Клиент = @client, [Дата заказа] = @orderDate, [Дата доставки] = @deliveryDate, [Состав заказа] = @orderContent 
+            WHERE Id = @id";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (SqlCommand updateCommand = new SqlCommand(updateSql, connection))
+                {
+                    updateCommand.Parameters.AddWithValue("@client", client);
+                    updateCommand.Parameters.AddWithValue("@orderDate", orderDate);
+                    updateCommand.Parameters.AddWithValue("@deliveryDate", deliveryDate);
+                    updateCommand.Parameters.AddWithValue("@orderContent", orderContent);
+                    updateCommand.Parameters.AddWithValue("@id", id);
+                    await updateCommand.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        public class Prompt : Form
+        {
+            public static string ShowDialog(string text, string caption)
+            {
+                Form prompt = new Form()
+                {
+                    Width = 500,
+                    Height = 300,
+                    Text = caption
+                };
+                Label textLabel = new Label() { Left = 50, Top = 20, Text = text };
+                TextBox textBox = new TextBox() { Left = 50, Top = 50, Width = 400 };
+                Button confirmation = new Button() { Text = "Ok", Left = 350, Width = 100, Top = 70 };
+                confirmation.Click += (sender, e) => { prompt.Close(); };
+                prompt.Controls.Add(confirmation);
+                prompt.Controls.Add(textBox);
+                prompt.Controls.Add(textLabel);
+                prompt.ShowDialog();
+                return textBox.Text;
+            }
+        }
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+    }
+}
+
+
+https://github.com/LaprinaME/TourismAgencyApp.git
+Требования 3НФ:
+Таблица должна быть во второй нормальной форме (2НФ).
+
+Уже нет повторяющихся данных и зависимостей от части составного ключа.
+Каждый неключевой столбец должен зависеть только от первичного ключа.
+
+Данные в таблице должны описывать исключительно ключ, а не друг друга.
+Нельзя, чтобы какой-то столбец зависел от другого столбца, который сам не является ключом. Это называется транзитивной зависимостью.
+Первая нормальная форма (1НФ)
+Правило: Все данные должны быть в виде таблицы, где каждая ячейка содержит только одно значение, и каждая строка уникальна.
+
+Простой пример: Допустим, у нас есть таблица о покупках:
+
+Покупатель	Товар
+Иван	Молоко, Хлеб
+Анна	Сахар
+Что не так?
+
+В ячейке у Ивана написано сразу два товара ("Молоко, Хлеб"). Это нарушение 1НФ.
+Как исправить? Разделяем товары в отдельные строки:
+
+Покупатель	Товар
+Иван	Молоко
+Иван	Хлеб
+Анна	Сахар
+Теперь каждая ячейка содержит одно значение, и таблица соответствует 1НФ.
+Вторая нормальная форма (2НФ)
+Правило: Таблица должна соответствовать 1НФ, и все неключевые столбцы должны зависеть от всего первичного ключа, а не от его части.
+
+Простой пример: Таблица о заказах:
+
+Заказ ID	Покупатель	Адрес	Товар
+1	Иван	Улица Ленина	Молоко
+2	Анна	Улица Победы	Хлеб
+Что не так? Если у одного покупателя несколько заказов, его адрес будет повторяться. Это избыточность. Адрес зависит только от покупателя, а не от всей информации о заказе.
+
+Как исправить? Разделяем таблицу на две:
+
+Таблица с покупателями:
+
+Покупатель	Адрес
+Иван	Улица Ленина
+Анна	Улица Победы
+Таблица с заказами:
+
+Заказ ID	Покупатель	Товар
+1	Иван	Молоко
+2	Анна	Хлеб
+Теперь каждая таблица соответствует 2НФ: все данные зависят от полного первичного ключа (в заказах — это "Заказ ID").
+
+Третья нормальная форма (3НФ)
+Правило: Таблица должна соответствовать 2НФ, и неключевые столбцы должны зависеть только от первичного ключа, а не друг от друга.
+
+Простой пример: Таблица с книгами:
+
+Книга ID	Название	Автор	Страна автора
+1	Война и мир	Толстой	Россия
+2	Гарри Поттер	Роулинг	Англия
+Что не так? Страна автора зависит от столбца "Автор", а не от "Книга ID". Это нарушение 3НФ.
+
+Как исправить? Разделяем таблицу на две:
+
+Таблица с авторами:
+
+Автор	Страна автора
+Толстой	Россия
+Роулинг	Англия
+Таблица с книгами:
+
+Книга ID	Название	Автор
+1	Война и мир	Толстой
+2	Гарри Поттер	Роулинг
+Теперь каждая таблица соответствует 3НФ: все столбцы зависят только от первичного ключа.
+
+Итог:
+1НФ: Убираем многозначные данные в ячейках.
+2НФ: Убираем зависимость от части ключа, выделяем отдельные таблицы.
+3НФ: Убираем зависимость между неключевыми столбцами, разделяя таблицы.
+Таким образом, данные организуются логично, и меньше шансов на ошибки или избыточность.
+
+CREATE DATABASE TravelAgencyDB;
+GO
+
+USE TravelAgencyDB;
+GO
+
+CREATE TABLE Client (
+    ClientID INT IDENTITY(1,1) PRIMARY KEY,
+    FirstName VARCHAR(100),
+    LastName VARCHAR(100),
+    Phone VARCHAR(15),
+    Email VARCHAR(100),
+    Address VARCHAR(255)
+);
+
+CREATE TABLE Tour (
+    TourID INT IDENTITY(1,1) PRIMARY KEY,
+    TourName VARCHAR(100),
+    TourDescription TEXT,
+    Price DECIMAL(10, 2),
+    DurationDays INT
+);
+
+CREATE TABLE Booking (
+    BookingID INT IDENTITY(1,1) PRIMARY KEY,
+    ClientID INT,
+    TourID INT,
+    BookingDate DATE,
+    TotalAmount DECIMAL(10, 2),
+    FOREIGN KEY (ClientID) REFERENCES Client(ClientID),
+    FOREIGN KEY (TourID) REFERENCES Tour(TourID)
+);
+
+INSERT INTO Client (FirstName, LastName, Phone, Email, Address)
+VALUES 
+    ('John', 'Doe', '123-456-7890', 'john.doe@example.com', '123 Main St'),
+    ('Jane', 'Smith', '987-654-3210', 'jane.smith@example.com', '456 Elm St'),
+    ('Michael', 'Brown', '555-123-4567', 'michael.brown@example.com', '789 Pine St');
+
+INSERT INTO Tour (TourName, TourDescription, Price, DurationDays)
+VALUES 
+    ('Beach Getaway', 'Relax on the sunny beaches of the Caribbean.', 1200.00, 7),
+    ('Mountain Adventure', 'Explore the majestic mountains and enjoy hiking trails.', 850.00, 5),
+    ('City Escape', 'Discover the vibrant culture and landmarks of a bustling city.', 600.00, 3);
+
+INSERT INTO Booking (ClientID, TourID, BookingDate, TotalAmount)
+VALUES 
+    (1, 1, '2024-12-01', 1200.00),
+    (2, 2, '2024-12-05', 850.00),
+    (3, 3, '2024-12-10', 600.00);
+
+-- Добавление нового столбца в таблицу Client
+ALTER TABLE Client
+ADD DateOfBirth DATE;
+
+-- Добавление первичного ключа в таблицу Client (если его нет)
+ALTER TABLE Client
+ADD CONSTRAINT PK_ClientID PRIMARY KEY (ClientID);
+
+-- Добавление внешнего ключа в таблицу Booking
+ALTER TABLE Booking
+ADD CONSTRAINT FK_Client FOREIGN KEY (ClientID) REFERENCES Client(ClientID);
+
+-- Вставка данных в таблицу Client
+INSERT INTO Client (FirstName, LastName, Phone, Email, Address)
+VALUES ('John', 'Doe', '123-456-7890', 'john.doe@example.com', '123 Main St');
+
+-- Перенос данных в таблицу Tour
+INSERT INTO Tour (TourName, TourDescription, Price, DurationDays)
+SELECT TourName, TourDescription, Price, DurationDays
+FROM ImportedTourData;
+
+-- Обновление данных в таблице Client
+UPDATE Client
+SET Email = 'new.email@example.com'
+WHERE ClientID = 1;
+
+-- Удаление данных из таблицы Booking
+DELETE FROM Booking
+WHERE BookingID = 10;
+
+-- Удаление таблицы Client
+DROP TABLE Client;
+
+-- Создание индекса на столбец Phone в таблице Client
+CREATE INDEX IDX_ClientPhone ON Client (Phone);
+
+-- Добавление уникального ограничения на столбец Email в таблице Client
+ALTER TABLE Client
+ADD CONSTRAINT UQ_Email UNIQUE (Email);
+
+-- Использование INSERT INTO ... SELECT для замены столбцов и переноса данных
+INSERT INTO ClientService (ClientID, StartTime, ServiceID)
+SELECT client.ClientID, client_service_import.StartTime, service.ServiceID
+FROM client_service_import
+JOIN Client ON client_service_import.ClientLastName = Client.LastName
+JOIN Service ON client_service_import.ServiceTitle = Service.Title;
+
+-- Удаление внешнего ключа из таблицы Booking
+ALTER TABLE Booking
+DROP CONSTRAINT FK_Client;
+
+-- Удаление первичного ключа из таблицы Client
+ALTER TABLE Client
+DROP CONSTRAINT PK_ClientID;
+
+-- Добавление или изменение Identity в таблице Client
+ALTER TABLE Client
+ADD ClientID INT IDENTITY(1,1);
+
+-- Изменение имени столбца в таблице Client
+EXEC sp_rename 'Client.LastName', 'Surname', 'COLUMN';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
